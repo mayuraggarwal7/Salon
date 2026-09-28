@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ client }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ client }}</h1>
+  <div>
+    <a class="btn" href="{% url 'chat' client.pk %}">WhatsApp chat</a>
+    <a class="btn" href="{% url 'client_edit' client.pk %}">Edit</a>
+    <a class="btn" href="{% url 'invoice_new' client.pk %}">+ Past invoice</a>
+    <a class="btn primary" href="{% url 'appointment_new' %}?client_phone={{ client.phone }}&client_name={{ client.name|urlencode }}">+ Book</a>
+  </div>
+</div>
+<div class="grid-2">
+  <section class="card">
+    <p><strong>WhatsApp:</strong> +{{ client.phone }}</p>
+    <p><strong>Anchor stylist:</strong> {% if client.anchor_stylist %}⭐ {{ client.anchor_stylist }}{% else %}<span class="warn">none</span> · <a href="{% url 'client_edit' client.pk %}">assign one</a>{% endif %}</p>
+    <p class="muted small">Client since {{ client.created_at|date:"j M Y" }}</p>
+    {% if client.notes %}<p class="notes">{{ client.notes|linebreaksbr }}</p>{% endif %}
+  </section>
+  <section class="card">{% include "booking/_client_insights.html" %}</section>
+</div>
+<section class="card">
+  <h2>Appointments</h2>
+  {% if appointments %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>When</th><th>Service</th><th>Stylist</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for appt in appointments %}
+      <tr><td>{{ appt.start|date:"D j M Y, h:i A" }}</td><td>{{ appt.service }}</td><td>{{ appt.stylist|default:"—" }}</td>
+      <td>{% include "booking/_status.html" %}</td>
+      <td class="actions">{% if appt.is_active %}<a class="btn small primary" href="{% url 'checkout' appt.pk %}">Checkout</a>{% endif %} <a class="btn small" href="{% url 'appointment_edit' appt.pk %}">Edit</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty">No appointments yet.</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Invoices</h2>
+  {% if invoices %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Invoice</th><th>Items</th><th>Stylist</th><th>Total</th><th></th></tr></thead>
+    <tbody>{% for inv in invoices %}
+      <tr>
+        <td class="nowrap">{{ inv.date|date:"j M Y" }}</td>
+        <td>{{ inv.number|default:"—" }} <span class="muted small">{{ inv.get_source_display }}</span></td>
+        <td>{% for line in inv.lines.all %}{{ line.label }}{% if line.quantity > 1 %} ×{{ line.quantity }}{% endif %} <span class="muted">{{ SALON_CURRENCY }}{{ line.amount|floatformat:"-2" }}</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+        <td>{{ inv.stylist|default:"—" }}</td>
+        <td>{{ SALON_CURRENCY }}{{ inv.total|floatformat:"-2" }}</td>
+        <td class="actions">{% if inv.file %}<a class="btn small" href="{% url 'invoice_file' inv.pk %}">View scan</a>{% endif %}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty">No invoices yet. <a href="{% url 'invoice_new' client.pk %}">Upload a past invoice</a> so staff are prompted what to charge and offer.</p>{% endif %}
+</section>
+{% endblock %}

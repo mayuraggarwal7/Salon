@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Appointments{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Appointments</h1>
+  <a class="btn primary" href="{% url 'appointment_new' %}?date={{ day|date:'Y-m-d' }}">+ New appointment</a>
+</div>
+<form class="toolbar" method="get">
+  <a class="btn" href="?date={{ prev_day|date:'Y-m-d' }}{% if stylist_id %}&stylist={{ stylist_id }}{% endif %}">‹</a>
+  <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()">
+  <a class="btn" href="?date={{ next_day|date:'Y-m-d' }}{% if stylist_id %}&stylist={{ stylist_id }}{% endif %}">›</a>
+  <select name="stylist" onchange="this.form.submit()">
+    <option value="">All stylists</option>
+    {% for s in stylists %}<option value="{{ s.pk }}" {% if stylist_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s }}</option>{% endfor %}
+  </select>
+  <strong>{{ day|date:"l, j F Y" }}</strong>
+</form>
+<section class="card">{% include "booking/_appointment_table.html" %}</section>
+{% endblock %}

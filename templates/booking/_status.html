@@ -1,0 +1,1 @@
+<span class="pill {{ appt.status }}">{{ appt.get_status_display }}</span>{% if appt.source == "whatsapp" %} <span class="pill wa" title="Booked over WhatsApp">WA</span>{% endif %}

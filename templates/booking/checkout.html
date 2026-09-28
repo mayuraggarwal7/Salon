@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Checkout · {{ appointment.client }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Checkout · <a href="{% url 'client_detail' appointment.client.pk %}">{{ appointment.client }}</a></h1>
+  <span class="muted">{{ appointment.start|date:"D j M, h:i A" }} · {{ appointment.stylist|default:"" }}</span>
+</div>
+<div class="grid-2">
+  <section class="card">
+    <form method="post" id="checkout">{% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="prompt">💰 {{ charge_hint }}</div>
+      <div class="field">{{ form.main_price.label_tag }} {{ form.main_price }} {{ form.main_price.errors }}</div>
+      {% if form.suggestions %}
+      <h3>💡 Suggested add-ons</h3>
+      {% for s, add, price in form.suggestion_rows %}
+      <div class="addon">
+        <label>{{ add }} <strong>{{ s.service }}</strong> <span class="pill {{ s.kind }}">{{ s.label }}</span></label>
+        <div class="muted small">{{ s.reason }}</div>
+        {{ price }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      <div class="field row">
+        <div>{{ form.extra_service.label_tag }} {{ form.extra_service }}</div>
+        <div><label for="{{ form.extra_price.id_for_label }}">Price</label> {{ form.extra_price }}</div>
+      </div>
+      <div class="field">{{ form.notes.label_tag }} {{ form.notes }}</div>
+      <p class="total">Total: <strong id="total"></strong></p>
+      <button class="btn primary">Charge &amp; complete visit</button>
+      <a class="btn" href="{% url 'appointment_list' %}">Back</a>
+    </form>
+  </section>
+  <section class="card">
+    <h2>{{ appointment.client }}</h2>
+    {% include "booking/_client_insights.html" with client=appointment.client suggestions=None %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const f = document.getElementById("checkout");
+  const num = el => parseFloat(el && el.value) || 0;
+  function total() {
+    let t = num(f.main_price);
+    f.querySelectorAll("input[name^=add_]").forEach(cb => {
+      if (cb.checked) t += num(f.elements["price_" + cb.name.slice(4)]);
+    });
+    if (f.extra_service.value) t += num(f.extra_price);
+    document.getElementById("total").textContent = "{{ SALON_CURRENCY }}" + t.toLocaleString(undefined, {maximumFractionDigits: 2});
+  }
+  f.addEventListener("input", total); f.addEventListener("change", total); total();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{# Needs: client, summary, history, suggestions #}
+<div class="kpis">
+  <div><span>{{ summary.visits }}</span>past invoices</div>
+  <div><span>{{ SALON_CURRENCY }}{{ summary.spend|floatformat:"-2" }}</span>lifetime spend</div>
+  <div><span>{{ SALON_CURRENCY }}{{ summary.average_ticket|floatformat:"-2" }}</span>average bill</div>
+  <div><span>{{ summary.last_visit|date:"j M Y"|default:"—" }}</span>last visit</div>
+</div>
+{% if suggestions %}
+<h3>💡 Offer next</h3>
+<ul class="suggestions">
+  {% for s in suggestions %}
+  <li>
+    <div><span class="pill {{ s.kind }}">{{ s.label }}</span> <strong>{{ s.service }}</strong> <span class="muted">{{ SALON_CURRENCY }}{{ s.service.price|floatformat:"-2" }}</span>
+      <div class="muted small">{{ s.reason }}</div></div>
+    <form method="post" action="{% url 'send_offer' client.pk %}">{% csrf_token %}
+      <input type="hidden" name="service" value="{{ s.service.pk }}">
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="btn small" title="Send a one-tap “Book it” offer on WhatsApp">Offer on WhatsApp</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if history %}
+<h3>💰 Price history</h3>
+<div class="table-wrap"><table class="compact">
+  <thead><tr><th>Service</th><th>×</th><th>Last</th><th>Paid</th><th>List</th></tr></thead>
+  <tbody>{% for h in history %}
+    <tr><td>{{ h.service }}</td><td>{{ h.times }}</td><td class="nowrap">{{ h.last_date|date:"j M y" }}</td>
+      <td class="{% if h.price_differs %}warn{% endif %}">{{ SALON_CURRENCY }}{{ h.last_price|floatformat:"-2" }}</td>
+      <td>{{ SALON_CURRENCY }}{{ h.service.price|floatformat:"-2" }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endif %}

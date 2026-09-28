@@ -1,0 +1,11 @@
+{% for m in chat_messages %}
+<div class="bubble {{ m.direction }}{% if m.sent_by_staff %} staff{% endif %}">
+  <div class="text">{{ m.body|linebreaksbr }}</div>
+  <div class="meta">{{ m.created_at|date:"j M, h:i A" }}
+    {% if m.direction == "out" %} · {% if m.sent_by_staff %}{{ m.staff|default:"staff" }}{% if m.via_relay %} via their WhatsApp{% endif %}{% else %}bot{% endif %}{% if m.status %} · {{ m.status }}{% endif %}
+    {% elif m.via_relay %} · forwarded to {{ m.staff }}{% endif %}
+  </div>
+</div>
+{% empty %}
+<p class="empty">No messages yet.</p>
+{% endfor %}

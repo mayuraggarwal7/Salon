@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{% if appointment %}Edit{% else %}New{% endif %} appointment{% endblock %}
+{% block content %}
+<h1>{% if appointment %}Edit{% else %}New{% endif %} appointment</h1>
+<div class="card form-card">
+  <form method="post" id="appt-form">{% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="field{% if field.errors %} has-error{% endif %}">
+        {% if field.field.widget.input_type == "checkbox" %}
+          <label>{{ field }} {{ field.label }}</label>
+        {% else %}
+          {{ field.label_tag }} {{ field }}
+        {% endif %}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <div id="slots" class="slots" hidden><div class="muted small">Free times (tap to fill):</div><div class="slot-list"></div></div>
+    <button class="btn primary">Save</button>
+    <a class="btn" href="{% url 'appointment_list' %}">Back</a>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const f = document.getElementById("appt-form");
+  const box = document.getElementById("slots"), list = box.querySelector(".slot-list");
+  async function refresh() {
+    const service = f.service.value, day = f.date.value, stylist = f.stylist.value;
+    if (!service || !day) { box.hidden = true; return; }
+    const r = await fetch(`{% url 'slots_api' %}?service=${service}&date=${day}&stylist=${stylist}`);
+    const data = await r.json();
+    list.innerHTML = "";
+    if (!data.slots.length) { list.textContent = "No free times that day."; }
+    data.slots.forEach(s => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn small"; b.textContent = s.time; b.title = s.stylist;
+      b.onclick = () => { f.time.value = s.time; if (!f.stylist.value) f.stylist.value = s.stylist_id; };
+      list.appendChild(b);
+    });
+    box.hidden = false;
+  }
+  ["service", "date", "stylist"].forEach(n => f[n].addEventListener("change", refresh));
+  refresh();
+})();
+</script>
+{% endblock %}

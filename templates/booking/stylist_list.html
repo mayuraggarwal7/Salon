@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Stylists{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Stylists</h1>{% if IS_MANAGER %}<a class="btn primary" href="{% url 'stylist_new' %}">+ New stylist</a>{% endif %}</div>
+<section class="card">
+{% if stylists %}
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>WhatsApp</th><th>Services</th><th>Anchored clients</th><th>Chats</th><th>Login</th><th></th></tr></thead>
+  <tbody>{% for s in stylists %}
+    <tr class="{% if not s.active %}dim{% endif %}">
+      <td><a href="{% url 'appointment_list' %}?stylist={{ s.pk }}">{{ s.name }}</a></td>
+      <td>{% if s.phone %}+{{ s.phone }}{% else %}—{% endif %}</td>
+      <td>{{ s.services.all|join:", "|default:"—" }}</td>
+      <td><a href="{% url 'client_list' %}?anchor={{ s.pk }}">{{ s.clients }}</a></td>
+      <td>{% if s.relay_whatsapp %}📱 forwarded to phone{% else %}web inbox{% endif %}</td>
+      <td>{{ s.user.username|default:"—" }}</td>
+      <td class="actions">{% if IS_MANAGER %}<a class="btn small" href="{% url 'stylist_edit' s.pk %}">Edit</a>{% endif %}</td>
+    </tr>{% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="empty">Add your team, and the services each person offers.</p>{% endif %}
+</section>
+{% endblock %}

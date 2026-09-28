@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}WhatsApp inbox{% endblock %}
+{% block content %}
+<h1>WhatsApp inbox</h1>
+<nav class="tabs">
+  {% if me %}<a href="?view=mine" class="{% if view == 'mine' %}on{% endif %}">My clients</a>{% endif %}
+  <a href="?view=waiting" class="{% if view == 'waiting' %}on{% endif %}">Waiting for reply</a>
+  <a href="?view=unassigned" class="{% if view == 'unassigned' %}on{% endif %}">Front desk</a>
+  <a href="?view=all" class="{% if view == 'all' %}on{% endif %}">All</a>
+</nav>
+<section class="card">
+{% if clients %}
+<ul class="inbox">{% for c in clients %}
+  <li class="{% if c.unread %}unread{% endif %}">
+    <a href="{% url 'chat' c.pk %}">
+      <strong>{{ c }}</strong>
+      {% if c.conversation.needs_staff %}<span class="pill cancelled">Needs reply</span>{% endif %}
+      {% if c.unread %}<span class="badge">{{ c.unread }}</span>{% endif %}
+      <span class="muted small">
+        {% if c.conversation.assigned_to %}→ {{ c.conversation.assigned_to }}{% elif c.anchor_stylist %}⭐ {{ c.anchor_stylist }}{% endif %}
+      </span>
+      <span class="muted small right">{{ c.last_message_at|timesince }} ago</span>
+    </a>
+  </li>{% endfor %}
+</ul>
+{% else %}
+<p class="empty">No conversations here.</p>
+{% endif %}
+</section>
+{% endblock %}

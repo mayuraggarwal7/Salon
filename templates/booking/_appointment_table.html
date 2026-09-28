@@ -1,0 +1,42 @@
+{% if appointments %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Time</th><th>Client</th><th>Service</th><th>Stylist</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for appt in appointments %}
+  <tr class="{% if not appt.is_active and appt.status != 'completed' %}dim{% endif %}">
+    <td class="nowrap">{{ appt.start|time:"h:i A" }}–{{ appt.end|time:"h:i A" }}</td>
+    <td>
+      <a href="{% url 'client_detail' appt.client.pk %}">{{ appt.client }}</a>
+      {% if appt.client.anchor_stylist_id and appt.client.anchor_stylist_id != appt.stylist_id %}<span class="muted small" title="Anchor stylist">⭐ {{ appt.client.anchor_stylist }}</span>{% endif %}
+      {% if appt.notes %}<div class="muted small">{{ appt.notes }}</div>{% endif %}
+    </td>
+    <td>
+      {{ appt.service }}
+      {% if appt.is_active %}
+        {% if appt.charge_hint %}<div class="hint">💰 {{ appt.charge_hint }}</div>{% endif %}
+        {% for s in appt.suggestions %}<div class="hint sell">💡 {{ s.label }}: <strong>{{ s.service }}</strong> <span class="muted">– {{ s.reason }}</span></div>{% endfor %}
+      {% endif %}
+    </td>
+    <td>{{ appt.stylist|default:"—" }}</td>
+    <td>{% include "booking/_status.html" %}</td>
+    <td class="actions">
+      {% if appt.is_active %}
+      <a class="btn small primary" href="{% url 'checkout' appt.pk %}">Checkout</a>
+      <form method="post" action="{% url 'appointment_status' appt.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button name="status" value="no_show" class="btn small">No-show</button>
+        <input type="hidden" name="notify" value="1">
+        <button name="status" value="cancelled" class="btn small danger" onclick="return confirm('Cancel and notify the client on WhatsApp?')">Cancel</button>
+      </form>
+      {% endif %}
+      <a class="btn small" href="{% url 'appointment_edit' appt.pk %}">Edit</a>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">No appointments.</p>
+{% endif %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Services</h1>{% if IS_MANAGER %}<a class="btn primary" href="{% url 'service_new' %}">+ New service</a>{% endif %}</div>
+<section class="card">
+{% if services %}
+<div class="table-wrap"><table>
+  <thead><tr><th>Service</th><th>Duration</th><th>Price</th><th>Stylists</th><th>Cross-sell</th><th>Upsell to</th><th>Rebook</th><th></th></tr></thead>
+  <tbody>{% for s in services %}
+    <tr class="{% if not s.active %}dim{% endif %}">
+      <td>{{ s.name }}{% if not s.active %} <span class="muted small">(hidden)</span>{% endif %}{% if s.description %}<div class="muted small">{{ s.description }}</div>{% endif %}</td>
+      <td>{{ s.duration_minutes }} min</td>
+      <td>{{ SALON_CURRENCY }}{{ s.price|floatformat:"-2" }}</td>
+      <td>{{ s.stylists.all|join:", "|default:"<span class='warn'>none — not bookable</span>" }}</td>
+      <td>{{ s.related_services.all|join:", "|default:"—" }}</td>
+      <td>{{ s.upgrade|default:"—" }}</td>
+      <td>{% if s.rebook_after_days %}every {{ s.rebook_after_days }} days{% else %}—{% endif %}</td>
+      <td class="actions">{% if IS_MANAGER %}<a class="btn small" href="{% url 'service_edit' s.pk %}">Edit</a>{% endif %}</td>
+    </tr>{% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="empty">Add the services you offer so clients can book them.</p>{% endif %}
+</section>
+{% endblock %}

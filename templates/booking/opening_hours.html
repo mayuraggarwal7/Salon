@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Opening hours{% endblock %}
+{% block content %}
+<h1>Opening hours</h1>
+<p class="muted">Clients can only book on WhatsApp within these hours.</p>
+<div class="card form-card">
+<form method="post">{% csrf_token %}
+  {{ formset.management_form }}
+  {{ formset.non_form_errors }}
+  <table class="hours">
+    <thead><tr><th>Day</th><th>Opens</th><th>Closes</th><th>Closed</th></tr></thead>
+    <tbody>{% for form in formset %}
+      <tr>
+        <td>{{ form.id }}{{ form.weekday }}<strong>{{ form.instance.get_weekday_display }}</strong>{{ form.non_field_errors }}</td>
+        <td>{{ form.opens }}</td><td>{{ form.closes }}</td><td>{{ form.closed }}</td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+  <button class="btn primary">Save</button>
+</form>
+</div>
+{% endblock %}

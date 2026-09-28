@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Chat · {{ client }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1><a href="{% url 'client_detail' client.pk %}">{{ client }}</a> <span class="muted small">+{{ client.phone }}</span></h1>
+  <div class="chat-controls">
+    {% if conversation.needs_staff %}
+      <span class="pill cancelled">With {{ conversation.assigned_to|default:"front desk" }}</span>
+    {% else %}
+      <span class="pill confirmed">Bot active</span>
+    {% endif %}
+    <form method="post" action="{% url 'chat_handover' client.pk %}">{% csrf_token %}
+      <select name="stylist" aria-label="Route chat to">
+        <option value="">Front desk</option>
+        {% for s in stylists %}<option value="{{ s.pk }}" {% if conversation.assigned_to_id == s.pk %}selected{% endif %}>{{ s }}{% if s.pk == client.anchor_stylist_id %} ⭐{% endif %}{% if s.relay_whatsapp %} 📱{% endif %}</option>{% endfor %}
+      </select>
+      <button class="btn" name="action" value="assign">Route</button>
+      {% if conversation.needs_staff %}
+        <button class="btn" name="action" value="bot">Hand back to bot</button>
+      {% else %}
+        <button class="btn" name="action" value="take">Take over</button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+<div class="chat-layout">
+  <section class="card chat">
+    <div id="thread" class="thread" data-src="{% url 'chat_messages' client.pk %}">{% include "booking/_messages.html" %}</div>
+    {% if not window_open %}
+    <p class="warn small">It has been more than 24h since this client last messaged. WhatsApp only delivers free-form replies inside that window; ask them to message you first or use an approved template.</p>
+    {% endif %}
+    <form method="post" class="reply">{% csrf_token %}
+      {{ form.body }}
+      <button class="btn primary">Send</button>
+    </form>
+    <p class="muted small">Stylists marked 📱 get this chat on their own WhatsApp and can reply from there. Every message stays in this thread.</p>
+  </section>
+  <aside class="card">
+    <p><strong>Anchor:</strong> {% if client.anchor_stylist %}⭐ {{ client.anchor_stylist }}{% else %}<a href="{% url 'client_edit' client.pk %}">assign</a>{% endif %}</p>
+    {% include "booking/_client_insights.html" %}
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const t = document.getElementById("thread");
+  const bottom = () => { t.scrollTop = t.scrollHeight; };
+  bottom();
+  setInterval(async () => {
+    const near = t.scrollHeight - t.scrollTop - t.clientHeight < 60;
+    const r = await fetch(t.dataset.src);
+    if (!r.ok) return;
+    t.innerHTML = await r.text();
+    if (near) bottom();
+  }, 8000);
+})();
+</script>
+{% endblock %}

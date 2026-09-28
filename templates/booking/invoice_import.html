@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Import past invoices{% endblock %}
+{% block content %}
+<h1>Import past invoices</h1>
+<div class="grid-2">
+  <section class="card">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn primary">Import</button>
+    </form>
+    {% if result %}
+    <h3>Result</h3>
+    <ul class="plain result">
+      <li>✅ {{ result.invoices }} invoice(s), {{ result.lines }} line(s) imported</li>
+      <li>👤 {{ result.clients_created }} new client(s)</li>
+      <li>⭐ {{ result.anchors_set }} client(s) given an anchor stylist (whoever served them most)</li>
+      {% if result.duplicates %}<li>↩️ {{ result.duplicates }} invoice(s) already imported, skipped</li>{% endif %}
+    </ul>
+    {% if result.unmatched_services %}
+    <p class="warn">Services not in your catalogue (kept as text): {% for name, n in result.unmatched_services.items %}<strong>{{ name }}</strong> ({{ n }}){% if not forloop.last %}, {% endif %}{% endfor %}.
+      <a href="{% url 'service_new' %}">Add them as services</a> with the same name and past lines link up automatically.</p>
+    {% endif %}
+    {% if result.unmatched_stylists %}
+    <p class="warn">Stylists not found: {% for name, n in result.unmatched_stylists.items %}<strong>{{ name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+    {% endif %}
+    {% if result.errors %}
+    <p class="warn">Rows skipped:</p>
+    <ul class="small">{% for row, err in result.errors %}<li>{% if row %}Row {{ row }}: {% endif %}{{ err }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>File format</h2>
+    <p>Export from your old billing software or Excel as CSV, <strong>one row per service</strong> on each invoice. Rows with the same invoice number are grouped into one invoice. Importing the same file twice is safe.</p>
+    <p class="small">Required columns: <code>date</code>, <code>phone</code>, <code>service</code>, <code>price</code>. Optional: <code>invoice</code>, <code>name</code>, <code>quantity</code>, <code>stylist</code>. Common alternatives like <em>Mobile</em>, <em>Bill No</em>, <em>Amount</em> and <em>Staff</em> are recognised.</p>
+    <pre class="sample">{{ sample }}</pre>
+    <p class="small muted">To attach a scanned or PDF invoice, open the client and use <em>+ Past invoice</em>.</p>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Past invoice · {{ client }}{% endblock %}
+{% block content %}
+<h1>Add past invoice · <a href="{% url 'client_detail' client.pk %}">{{ client }}</a></h1>
+<div class="card form-card wide">
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="grid-2 tight">
+      {% for field in form %}
+      <div class="field{% if field.errors %} has-error{% endif %}">{{ field.label_tag }} {{ field }}
+        {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>
+      {% endfor %}
+    </div>
+    <h3>Services on this invoice</h3>
+    {{ lines.management_form }}
+    {{ lines.non_form_errors }}
+    <div class="table-wrap"><table class="lines">
+      <thead><tr><th>Service</th><th>Or other item</th><th>Qty</th><th>Price each</th></tr></thead>
+      <tbody>{% for line in lines %}
+        <tr>
+          <td>{{ line.id }}{{ line.service }}{{ line.non_field_errors }}</td>
+          <td>{{ line.description }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{{ line.unit_price }}{{ line.unit_price.errors }}</td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    <button class="btn primary">Save invoice</button>
+    <a class="btn" href="{% url 'client_detail' client.pk %}">Back</a>
+  </form>
+</div>
+{% endblock %}

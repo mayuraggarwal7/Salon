@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Clients</h1>
+  <div>
+    {% if IS_MANAGER %}<a class="btn" href="{% url 'invoice_import' %}">Import past invoices</a>{% endif %}
+    <a class="btn primary" href="{% url 'client_new' %}">+ New client</a>
+  </div>
+</div>
+<form class="toolbar" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search name or phone">
+  <select name="anchor" onchange="this.form.submit()">
+    <option value="">All anchor stylists</option>
+    {% for s in stylists %}<option value="{{ s.pk }}" {% if anchor == s.pk|stringformat:"s" %}selected{% endif %}>⭐ {{ s }}</option>{% endfor %}
+  </select>
+  <button class="btn">Search</button>
+</form>
+<section class="card">
+{% if clients %}
+<div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>WhatsApp</th><th>Anchor stylist</th><th>Invoices</th><th>Last appointment</th><th></th></tr></thead>
+  <tbody>{% for c in clients %}
+    <tr>
+      <td><a href="{% url 'client_detail' c.pk %}">{{ c.name|default:"(no name)" }}</a></td>
+      <td>+{{ c.phone }}</td>
+      <td>{{ c.anchor_stylist|default:"—" }}</td>
+      <td>{{ c.visits }}</td>
+      <td>{{ c.last_visit|date:"j M Y"|default:"—" }}</td>
+      <td class="actions"><a class="btn small" href="{% url 'chat' c.pk %}">Chat</a></td>
+    </tr>{% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="empty">No clients found.</p>{% endif %}
+</section>
+{% endblock %}
