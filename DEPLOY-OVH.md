@@ -38,6 +38,26 @@ passwords, and starts everything. Then:
 3. In Meta's WhatsApp settings, set the webhook URL to `https://book.akssalon.in/whatsapp/webhook/` and the verify
    token to `WHATSAPP_VERIFY_TOKEN` from `.env`.
 
+## If the server already runs Nginx
+
+When ports 80/443 are taken by an existing Nginx (for other sites), keep it and put the salon behind it.
+From the app folder:
+
+```bash
+echo 'COMPOSE_FILE=docker-compose.yml:docker-compose.nginx.yml' | sudo tee -a .env
+sudo docker rm -f salon-caddy-1 2>/dev/null; sudo docker compose up -d
+DOMAIN=$(grep ^DOMAIN= .env | cut -d= -f2)
+sed "s/SALON_DOMAIN/$DOMAIN/" deploy/nginx-salon.conf | sudo tee /etc/nginx/sites-available/salon >/dev/null
+sudo ln -sf /etc/nginx/sites-available/salon /etc/nginx/sites-enabled/salon
+sudo nginx -t && sudo systemctl reload nginx
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d "$DOMAIN" --redirect
+```
+
+The app then listens only on `127.0.0.1:8001` (change with `APP_PORT` in `.env`), and Nginx serves it over HTTPS with a
+Let's Encrypt certificate that certbot renews automatically. `nginx -t` checks the config before the reload, so the
+other sites are not affected by a typo.
+
 ## Updating to a new version
 
 ```bash
