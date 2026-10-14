@@ -9,6 +9,7 @@ x-app: &app
   image: salon-app
   restart: unless-stopped
   env_file: .env
+  dns: &dns [1.1.1.1, 8.8.8.8]
   environment:
     DATABASE_URL: postgres://salon:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/salon
     DJANGO_DEBUG: "false"
@@ -58,6 +59,8 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    # Public resolvers, so certificate requests work even when the host's DNS points at a local stub.
+    dns: *dns
     ports:
       - "80:80"
       - "443:443"
