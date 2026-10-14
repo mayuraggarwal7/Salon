@@ -5,7 +5,13 @@
 set -euo pipefail
 
 DOMAIN="${1:?usage: ovh-setup.sh <domain>}"
-APP_DIR="${APP_DIR:-/opt/salon}"
+# Run from inside a clone to use that clone; otherwise clone into /opt/salon.
+SCRIPT_REPO="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd || true)"
+if [ -n "$SCRIPT_REPO" ] && [ -f "$SCRIPT_REPO/docker-compose.yml" ]; then
+  APP_DIR="${APP_DIR:-$SCRIPT_REPO}"
+else
+  APP_DIR="${APP_DIR:-/opt/salon}"
+fi
 REPO="${REPO:-https://github.com/mayuraggarwal7/salon.git}"
 
 # Docker Engine + Compose plugin (official convenience script).
