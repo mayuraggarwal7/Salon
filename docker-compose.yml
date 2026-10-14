@@ -1,0 +1,98 @@
+# Salon app on a single server (e.g. an OVH VPS): app + Postgres + Caddy (automatic HTTPS)
+# + WhatsApp reminders + nightly database backups. Settings come from .env (see .env.example).
+#
+#   cp .env.example .env   # then fill it in
+#   docker compose up -d --build
+
+x-app: &app
+  build: .
+  image: salon-app
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://salon:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/salon
+    DJANGO_DEBUG: "false"
+    DJANGO_ALLOWED_HOSTS: ${DOMAIN:?set DOMAIN in .env}
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://${DOMAIN}
+    SALON_MEDIA_ROOT: /data/media
+  volumes:
+    - media:/data/media
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: salon
+      POSTGRES_USER: salon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salon -d salon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    <<: *app
+
+  # Sends WhatsApp appointment reminders every 15 minutes.
+  reminders:
+    <<: *app
+    environment:
+      DATABASE_URL: postgres://salon:${POSTGRES_PASSWORD}@db:5432/salon
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: ${DOMAIN}
+      SALON_MEDIA_ROOT: /data/media
+      RUN_MIGRATIONS: "false"
+    command: ["sh", "-c", "while true; do python manage.py send_reminders; sleep 900; done"]
+    depends_on:
+      web:
+        condition: service_started
+
+  # HTTPS on ports 80/443 with a free Let's Encrypt certificate for DOMAIN.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+  # Nightly database dump to ./backups, keeping the last 14 days.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          pg_dump -h db -U salon -d salon -Fc -f /backups/salon-$$(date +%F).dump && echo "backup ok"
+          find /backups -name 'salon-*.dump' -mtime +14 -delete
+          sleep 86400
+        done
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:
