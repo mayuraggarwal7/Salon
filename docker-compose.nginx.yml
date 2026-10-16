@@ -1,0 +1,11 @@
+# Use this when the server already runs Nginx on ports 80/443 (e.g. for other sites).
+# The app is published on 127.0.0.1:${APP_PORT:-8001} only, and the bundled Caddy is not started.
+# Enable it by adding this line to .env:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.nginx.yml
+# then add deploy/nginx-salon.conf to Nginx (see DEPLOY-OVH.md).
+services:
+  web:
+    ports:
+      - "127.0.0.1:${APP_PORT:-8001}:8000"
+  caddy:
+    profiles: ["caddy"]

@@ -100,6 +100,11 @@ Other hosts work the same way: run `build.sh`, start `gunicorn salon_project.wsg
 `DATABASE_URL`, `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=false`, `DJANGO_ALLOWED_HOSTS`,
 `DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_ADMIN_USERNAME` and `DJANGO_ADMIN_PASSWORD`.
 
+## Deploying on your own server (OVH or any VPS)
+
+See [DEPLOY-OVH.md](DEPLOY-OVH.md): Docker Compose with Postgres, automatic HTTPS, WhatsApp reminders and nightly
+backups, set up by one script.
+
 ## Connecting WhatsApp
 
 1. At [developers.facebook.com](https://developers.facebook.com/), create an app of type **Business** and add the **WhatsApp** product.
