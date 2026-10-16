@@ -58,6 +58,15 @@ The app then listens only on `127.0.0.1:8001` (change with `APP_PORT` in `.env`)
 Let's Encrypt certificate that certbot renews automatically. `nginx -t` checks the config before the reload, so the
 other sites are not affected by a typo.
 
+## Trial data
+
+To see the app with sample clients, appointments, invoices and WhatsApp chats, run this once from the
+app folder. It does nothing if the trial data is already there, and it skips the chats when WhatsApp is live.
+
+```
+sudo docker exec -i salon-web-1 python manage.py shell < deploy/seed_trial.py
+```
+
 ## Updating to a new version
 
 ```bash
